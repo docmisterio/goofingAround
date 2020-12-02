@@ -8,27 +8,73 @@ class ViewController: UIViewController {
     let numberLabelStackView = UIStackView()
     let mainButton = UIButton()
     
-    override func viewDidLoad() {
+    override func loadView() {
         super.viewDidLoad()
         view = UIView()
         
         setUpLabels()
         setUpConstraints()
-
+        
         setUpButton()
+    }
+    
+    func setButtonState(_ state: ButtonState) {
+        switch state {
+        case .ready:
+            mainButton.setTitle("START", for: .normal)
+            mainButton.setTitleColor(.white, for: .normal)
+            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
+        case .running:
+            mainButton.setTitle("STOP", for: .normal)
+            mainButton.setTitleColor(.white, for: .normal)
+            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
+        case .stopped:
+            mainButton.setTitle("RESET", for: .normal)
+            mainButton.setTitleColor(.white, for: .normal)
+            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
+        }
+    }
+    
+    @objc func buttonTapped() {
+        let numberFormatter = NumberFormatter()
+        let startTime = Date()
+        
+        func format(timer: Double) -> String {
+            numberFormatter.maximumFractionDigits = 2
+            numberFormatter.minimumFractionDigits = 2
+            numberFormatter.minimumIntegerDigits = 1
+            
+            guard let formattedNumber = numberFormatter.string(from: NSNumber(value: timer)) else { return "" }
+            return formattedNumber
+        }
+        
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: { [weak self] _ in
+            let currentDate = Date()
+            let duration = currentDate.timeIntervalSince(startTime)
+            
+            let formattedNumber = format(timer: duration)
+            self?.timerLabel.text = formattedNumber
+        })
+    }
+    
+    func startTapped() {
+        
+    }
+    
+    func stopTapped() {
+        
+    }
+    
+    func resetTapped() {
+        
     }
     
     func setUpButton() {
         mainButton.translatesAutoresizingMaskIntoConstraints = false
-        
         mainButton.setTitle("START", for: .normal)
-        mainButton.setTitleColor(.yellow, for: .normal)
+        mainButton.setTitleColor(.white, for: .normal)
         mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
         mainButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
-    }
-    
-    @objc func buttonTapped() {
-        print("button tapped")
     }
     
     func setUpLabels() {
@@ -40,7 +86,7 @@ class ViewController: UIViewController {
         view.addSubview(titleLabel)
         
         numberLabelStackView.translatesAutoresizingMaskIntoConstraints = false
-        numberLabelStackView.backgroundColor = .systemYellow
+        numberLabelStackView.backgroundColor = .gray
         numberLabelStackView.alignment = .fill
         numberLabelStackView.axis = .horizontal
         numberLabelStackView.distribution = .equalSpacing
@@ -99,5 +145,9 @@ class ViewController: UIViewController {
             mainButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ]
         NSLayoutConstraint.activate(constraints)
+    }
+    
+    enum ButtonState {
+        case ready, running, stopped
     }
 }
