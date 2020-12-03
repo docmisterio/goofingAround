@@ -18,24 +18,22 @@ class ViewController: UIViewController {
         setUpConstraints()
         setUpButton()
     }
-
     
     @objc func buttonTapped() {
-        if buttonState == .readyToBeRun {
+        switch buttonState {
+        case .readyToBeRun:
             startTapped()
             
             buttonState = .running
             mainButton.setTitle("STOP", for: .normal)
             mainButton.setTitleColor(.red, for: .normal)
-            
-        } else if buttonState == .running {
+        case .running:
             stopTapped()
             
             buttonState = .runningStopped
             mainButton.setTitle("RESET", for: .normal)
             mainButton.setTitleColor(.white, for: .normal)
-
-        } else if buttonState == .runningStopped {
+        case .runningStopped:
             resetTapped()
             
             buttonState = .readyToBeRun
@@ -138,7 +136,6 @@ class ViewController: UIViewController {
         meterLabel.text = "0.00m"
         meterLabel.alpha = 0
 
-        
         view.addSubview(mainButton)
     }
     
