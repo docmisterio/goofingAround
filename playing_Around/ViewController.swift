@@ -7,66 +7,85 @@ class ViewController: UIViewController {
     let meterLabel = UILabel()
     let numberLabelStackView = UIStackView()
     let mainButton = UIButton()
+    var timer = Timer()
+    var buttonState: ButtonState = .readyToBeRun
     
-    override func loadView() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         view = UIView()
         
         setUpLabels()
         setUpConstraints()
-        
         setUpButton()
     }
+
     
-    func setButtonState(_ state: ButtonState) {
-        switch state {
-        case .ready:
+    @objc func buttonTapped() {
+        if buttonState == .readyToBeRun {
+            startTapped()
+        } else if buttonState == .running {
+            stopTapped()
+        } else if buttonState == .runningStopped {
+            print("reset stopped")
+            buttonState = .readyToBeRun
             mainButton.setTitle("START", for: .normal)
-            mainButton.setTitleColor(.white, for: .normal)
-            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
-        case .running:
-            mainButton.setTitle("STOP", for: .normal)
-            mainButton.setTitleColor(.white, for: .normal)
-            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
-        case .stopped:
-            mainButton.setTitle("RESET", for: .normal)
-            mainButton.setTitleColor(.white, for: .normal)
-            mainButton.titleLabel?.font = UIFont.systemFont(ofSize: 75)
         }
     }
     
-    @objc func buttonTapped() {
+    func startTapped() {
+        print("time started")
+        buttonState = .running
+        mainButton.setTitle("STOP", for: .normal)
         let numberFormatter = NumberFormatter()
         let startTime = Date()
         
-        func format(timer: Double) -> String {
-            numberFormatter.maximumFractionDigits = 2
-            numberFormatter.minimumFractionDigits = 2
-            numberFormatter.minimumIntegerDigits = 1
-            
-            guard let formattedNumber = numberFormatter.string(from: NSNumber(value: timer)) else { return "" }
-            return formattedNumber
-        }
+
         
-        let timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: { [weak self] _ in
             let currentDate = Date()
             let duration = currentDate.timeIntervalSince(startTime)
             
-            let formattedNumber = format(timer: duration)
+            let formattedNumber = self?.format(duration)
             self?.timerLabel.text = formattedNumber
         })
     }
     
-    func startTapped() {
-        
-    }
-    
     func stopTapped() {
+        print("timer stopped")
+        buttonState = .runningStopped
+        timer.invalidate()
+        mainButton.setTitle("RESET", for: .normal)
         
+        guard let capturedTime = timerLabel.text else { return }
+        print(capturedTime)
+        
+        func durationInFeet(_ duration: String) -> String {
+            let currentDuration = Double(duration)
+            return format((currentDuration! * currentDuration! * 16))
+        }
+
+        func durationInMeters(_ duration: String) -> String {
+            guard let myDuration = Double(duration) else { return "No Duration Captured" }
+            return format((myDuration * myDuration * 16 * 0.3))
+        }
+        
+        feetLabel.text = "\(durationInFeet(capturedTime))ft"
+        meterLabel.text = "\(durationInMeters(capturedTime))m"
     }
     
     func resetTapped() {
         
+    }
+    
+    func format(_ timer: Double) -> String {
+        let numberFormatter = NumberFormatter()
+        
+        numberFormatter.maximumFractionDigits = 2
+        numberFormatter.minimumFractionDigits = 2
+        numberFormatter.minimumIntegerDigits = 1
+        
+        guard let formattedNumber = numberFormatter.string(from: NSNumber(value: timer)) else { return "" }
+        return formattedNumber
     }
     
     func setUpButton() {
@@ -106,13 +125,13 @@ class ViewController: UIViewController {
         feetLabel.font = UIFont.systemFont(ofSize: 40)
         feetLabel.textColor = .white
         feetLabel.textAlignment = .center
-        feetLabel.text = "0.00 ft"
+        feetLabel.text = "0.00ft"
         
         meterLabel.translatesAutoresizingMaskIntoConstraints = false
         meterLabel.font = UIFont.systemFont(ofSize: 40)
         meterLabel.textColor = .white
         meterLabel.textAlignment = .center
-        meterLabel.text = "0.00 m"
+        meterLabel.text = "0.00m"
         
         view.addSubview(mainButton)
     }
@@ -148,6 +167,18 @@ class ViewController: UIViewController {
     }
     
     enum ButtonState {
-        case ready, running, stopped
+        case readyToBeRun, running, runningStopped
+    }
+    
+    func transition(the label: UILabel, to thisString: String) {
+        let transition = CATransition()
+        transition.duration = 0.2
+        
+        CATransaction.begin()
+        CATransaction.setCompletionBlock({ [] in
+            label.text = thisString
+            label.layer.add(transition, forKey: kCATransition)
+        })
+        CATransaction.commit()
     }
 }
