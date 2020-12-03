@@ -23,23 +23,28 @@ class ViewController: UIViewController {
     @objc func buttonTapped() {
         if buttonState == .readyToBeRun {
             startTapped()
+            
+            buttonState = .running
+            mainButton.setTitle("STOP", for: .normal)
+            mainButton.setTitleColor(.red, for: .normal)
+            
         } else if buttonState == .running {
             stopTapped()
+            
+            buttonState = .runningStopped
+            mainButton.setTitle("RESET", for: .normal)
+            mainButton.setTitleColor(.white, for: .normal)
+
         } else if buttonState == .runningStopped {
-            print("reset stopped")
+            resetTapped()
+            
             buttonState = .readyToBeRun
             mainButton.setTitle("START", for: .normal)
         }
     }
     
     func startTapped() {
-        print("time started")
-        buttonState = .running
-        mainButton.setTitle("STOP", for: .normal)
-        let numberFormatter = NumberFormatter()
         let startTime = Date()
-        
-
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: { [weak self] _ in
             let currentDate = Date()
@@ -51,30 +56,29 @@ class ViewController: UIViewController {
     }
     
     func stopTapped() {
-        print("timer stopped")
-        buttonState = .runningStopped
         timer.invalidate()
-        mainButton.setTitle("RESET", for: .normal)
-        
         guard let capturedTime = timerLabel.text else { return }
-        print(capturedTime)
         
-        func durationInFeet(_ duration: String) -> String {
-            let currentDuration = Double(duration)
-            return format((currentDuration! * currentDuration! * 16))
-        }
-
-        func durationInMeters(_ duration: String) -> String {
-            guard let myDuration = Double(duration) else { return "No Duration Captured" }
-            return format((myDuration * myDuration * 16 * 0.3))
-        }
-        
-        feetLabel.text = "\(durationInFeet(capturedTime))ft"
-        meterLabel.text = "\(durationInMeters(capturedTime))m"
+        feetLabel.alpha = 1
+        meterLabel.alpha = 1
+        animate(the: feetLabel, to: "\(durationInFeet(capturedTime))ft")
+        animate(the: meterLabel, to: "\(durationInMeters(capturedTime))m")
     }
     
     func resetTapped() {
-        
+        feetLabel.alpha = 0
+        meterLabel.alpha = 0
+        animate(the: timerLabel, to: "0:00")
+    }
+    
+    func durationInFeet(_ duration: String) -> String {
+        guard let currentDuration = Double(duration) else { return "No Duration Captured."}
+        return format((currentDuration * currentDuration * 16))
+    }
+
+    func durationInMeters(_ duration: String) -> String {
+        guard let currentDuration = Double(duration) else { return "No Duration Captured." }
+        return format((currentDuration * currentDuration * 16 * 0.3))
     }
     
     func format(_ timer: Double) -> String {
@@ -105,7 +109,6 @@ class ViewController: UIViewController {
         view.addSubview(titleLabel)
         
         numberLabelStackView.translatesAutoresizingMaskIntoConstraints = false
-        numberLabelStackView.backgroundColor = .gray
         numberLabelStackView.alignment = .fill
         numberLabelStackView.axis = .horizontal
         numberLabelStackView.distribution = .equalSpacing
@@ -116,22 +119,25 @@ class ViewController: UIViewController {
         numberLabelStackView.addSubview(meterLabel)
         
         timerLabel.translatesAutoresizingMaskIntoConstraints = false
-        timerLabel.font = UIFont.systemFont(ofSize: 80)
+        timerLabel.font = UIFont.systemFont(ofSize: 100)
         timerLabel.textColor = .white
         timerLabel.textAlignment = .center
         timerLabel.text = "0.00"
         
         feetLabel.translatesAutoresizingMaskIntoConstraints = false
-        feetLabel.font = UIFont.systemFont(ofSize: 40)
+        feetLabel.font = UIFont.systemFont(ofSize: 75)
         feetLabel.textColor = .white
         feetLabel.textAlignment = .center
         feetLabel.text = "0.00ft"
+        feetLabel.alpha = 0
         
         meterLabel.translatesAutoresizingMaskIntoConstraints = false
-        meterLabel.font = UIFont.systemFont(ofSize: 40)
+        meterLabel.font = UIFont.systemFont(ofSize: 75)
         meterLabel.textColor = .white
         meterLabel.textAlignment = .center
         meterLabel.text = "0.00m"
+        meterLabel.alpha = 0
+
         
         view.addSubview(mainButton)
     }
@@ -154,7 +160,7 @@ class ViewController: UIViewController {
             feetLabel.trailingAnchor.constraint(equalTo: numberLabelStackView.trailingAnchor, constant: -20),
             feetLabel.leadingAnchor.constraint(equalTo: numberLabelStackView.leadingAnchor, constant: 20),
             
-            meterLabel.topAnchor.constraint(equalTo: feetLabel.bottomAnchor, constant: 20),
+            meterLabel.topAnchor.constraint(equalTo: feetLabel.bottomAnchor, constant: 40),
             meterLabel.trailingAnchor.constraint(equalTo: numberLabelStackView.trailingAnchor, constant: -20),
             meterLabel.leadingAnchor.constraint(equalTo: numberLabelStackView.leadingAnchor, constant: 20),
             
@@ -170,7 +176,7 @@ class ViewController: UIViewController {
         case readyToBeRun, running, runningStopped
     }
     
-    func transition(the label: UILabel, to thisString: String) {
+    func animate(the label: UILabel, to thisString: String) {
         let transition = CATransition()
         transition.duration = 0.2
         
